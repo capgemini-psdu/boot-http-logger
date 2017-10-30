@@ -2,6 +2,8 @@ package com.capgemini.psdu.httplogger.filter;
 
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -20,7 +22,7 @@ import com.capgemini.psdu.httplogger.response.TeeHttpServletResponse;
 
 /**
  * Servlet filter to log every request and response.
- * 
+ *
  * @author CG10203
  * @author cg12988
  */
@@ -53,7 +55,8 @@ public class HttpRequestResponseFilter implements Filter {
 			if (bytes != null && bytes.length != 0) {
 				requestBody = new String(bytes);
 			}
-			LOGGER.debug("CorrelationId: {}, Request headers: {}, Request body: {}", correlationId, requestHeaders, requestBody);
+			Map<String, String> requestMap = getRequestMap(teeRequest);
+			LOGGER.debug("CorrelationId: {}, Request headers: {},Request param: {}, Request body: {}", correlationId, requestHeaders, requestMap, requestBody);
 
 			// Inject custom wrappers
 			chain.doFilter(teeRequest, teeResponse);
@@ -73,6 +76,16 @@ public class HttpRequestResponseFilter implements Filter {
 		}
 	}
 
+	private static Map<String, String> getRequestMap(HttpServletRequest request) {
+		Map<String, String> result = new HashMap<>();
+		Enumeration<String> it = request.getParameterNames();
+		while (it.hasMoreElements()) {
+			String key = it.nextElement();
+			result.put(key, request.getParameter(key));
+		}
+		return result;
+	}
+
 	private static String buildRequestHeaderString(HttpServletRequest httpRequest) {
 		Enumeration<?> enumeration = httpRequest.getHeaderNames();
 		StringBuilder headers = new StringBuilder();
@@ -83,7 +96,7 @@ public class HttpRequestResponseFilter implements Filter {
 		}
 		return headers.toString();
 	}
-	
+
 	private static String getCorrelationId(HttpServletRequest httpRequest) {
 		Enumeration<?> enumeration = httpRequest.getHeaderNames();
 		while (enumeration.hasMoreElements()) {
