@@ -11,3 +11,4 @@ spring.log
 soap-tests/output/*
 .idea/
 http-logger.iml
+*.iml
